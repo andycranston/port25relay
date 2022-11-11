@@ -1,4 +1,4 @@
-All: $(HOME)/.forward smua spool
+All: $(HOME)/.forward smua extractcontent spool
 	@sleep 1
 	touch All
 
@@ -7,6 +7,13 @@ $(HOME)/.forward: forward.template
 
 smua: smua.c
 	gcc -DSMUA_SUBDIR='"port25relay/spool"' -o smua smua.c
+
+smua.c:
+
+extractcontent: extractcontent.c
+	gcc -o extractcontent extractcontent.c
+
+extractcontent.c:
 
 spool:
 	mkdir spool
