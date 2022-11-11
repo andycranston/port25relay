@@ -1,8 +1,12 @@
-#!/usr/bin/python3
+#! /usr/bin/python3
 #
 # pythonmail.py
 #
 # send mail to gandi.net webmail acount
+#
+# Links:
+#
+#      https://medium.com/analytics-vidhya/how-to-send-mail-from-a-python-script-to-gmail-account-8d8f718592f8
 #
 
 ############################################################################
@@ -17,14 +21,21 @@ import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-
 ############################################################################
 
 def main():
     global progname
+    
+    parser = argparse.ArgumentParser()
 
-    sender_email = 'demo@cranstonhub.com'
-    receiver_email = 'demo@cranstonhub.com'
+    parser.add_argument('--address',     help='email address', required=True)
+    parser.add_argument('--subject',     help='email subject line text', required=True)
+    parser.add_argument('--content',     help='filename with content for body of email', required=True)
+        
+    args = parser.parse_args()
+
+    sender_email = args.address
+    receiver_email = args.address
 
     try:
         password = os.environ['PASSWORD']
@@ -36,22 +47,32 @@ def main():
         print('environment variable PASSWORD is set to the null string', file=sys.stderr)
         sys.exit(1)
 
+    body = ''
+
+    try:
+        contentfile = open(args.content, 'r', encoding='utf-8')
+    except IOError:
+        print('cannot open content file "{}" for reading'.format(args.content), file=sys.stderr)
+        sys.exit(1)
+
+    for line in contentfile:
+        line = line.rstrip()
+
+        body = body + line + '\n'
+
+    contentfile.close()
 
     message = MIMEMultipart("alternative")
-    message["Subject"] = "How to send mail from a Python script"
+    message["Subject"] = args.subject
     message["From"] = sender_email
     message["To"] = receiver_email
 
-    body_text = "Hi, This is plain text messag and you are learing How to send mail from a Python script."
+    part1 = MIMEText(body, "plain")
 
-    # Turn these into plain/html MIMEText objects
-    part1 = MIMEText(body_text, "plain")
-
-    # Add HTML/plain-text parts to MIMEMultipart message
     message.attach(part1)
 
-    # Create secure connection with server and send email
     context = ssl.create_default_context()
+
     with smtplib.SMTP_SSL("mail.gandi.net", 465, context=context) as server:
         server.login(sender_email, password)
         server.sendmail(
